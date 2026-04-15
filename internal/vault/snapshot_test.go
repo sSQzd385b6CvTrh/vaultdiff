@@ -89,6 +89,24 @@ func TestCapture_Destroyed(t *testing.T) {
 	}
 }
 
+func TestCapture_EmptyData(t *testing.T) {
+	body := snapshotKVResponse(1, map[string]interface{}{}, false)
+	ts, client := newSnapshotServer(t, 200, body)
+	defer ts.Close()
+
+	s := NewSnapshotter(client, "secret")
+	snap, err := s.Capture(context.Background(), "myapp/empty", 1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(snap.Data) != 0 {
+		t.Errorf("expected empty data map, got %d entries", len(snap.Data))
+	}
+	if snap.Deleted {
+		t.Error("expected Deleted=false for non-destroyed empty secret")
+	}
+}
+
 func TestNewSnapshotter_DefaultMount(t *testing.T) {
 	cfg := vaultapi.DefaultConfig()
 	client, _ := vaultapi.NewClient(cfg)
