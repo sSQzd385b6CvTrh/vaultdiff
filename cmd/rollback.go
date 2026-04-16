@@ -18,9 +18,9 @@ var rollbackCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		path := args[0]
-		version, err := strconv.Atoi(args[1])
-		if err != nil || version < 1 {
-			return fmt.Errorf("version must be a positive integer, got %q", args[1])
+		version, err := parseVersion(args[1])
+		if err != nil {
+			return err
 		}
 
 		client, err := vault.NewClient()
@@ -38,6 +38,18 @@ var rollbackCmd = &cobra.Command{
 			result.Path, result.ToVersion, result.NewVersion)
 		return nil
 	},
+}
+
+// parseVersion converts a string to a positive integer version number.
+func parseVersion(s string) (int, error) {
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, fmt.Errorf("version must be a positive integer, got %q", s)
+	}
+	if v < 1 {
+		return 0, fmt.Errorf("version must be >= 1, got %d", v)
+	}
+	return v, nil
 }
 
 func init() {
