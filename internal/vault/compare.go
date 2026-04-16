@@ -13,6 +13,19 @@ type SecretPair struct {
 	DataB    map[string]interface{}
 }
 
+// IsIdentical returns true if both versions contain the same keys and values.
+func (sp *SecretPair) IsIdentical() bool {
+	if len(sp.DataA) != len(sp.DataB) {
+		return false
+	}
+	for k, v := range sp.DataA {
+		if fmt.Sprintf("%v", sp.DataB[k]) != fmt.Sprintf("%v", v) {
+			return false
+		}
+	}
+	return true
+}
+
 // Comparer fetches and pairs secret versions for diffing.
 type Comparer struct {
 	fetcher *Fetcher
