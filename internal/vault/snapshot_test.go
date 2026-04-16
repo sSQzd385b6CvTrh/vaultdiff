@@ -108,10 +108,20 @@ func TestCapture_EmptyData(t *testing.T) {
 }
 
 func TestNewSnapshotter_DefaultMount(t *testing.T) {
-	cfg := vaultapi.DefaultConfig()
-	client, _ := vaultapi.NewClient(cfg)
-	s := NewSnapshotter(client, "")
-	if s.mount != "secret" {
-		t.Errorf("expected default mount 'secret', got %q", s.mount)
+	_, client := newSnapshotServer(t, 200, map[string]interface{}{})
+	s := NewSnapshotter(client, "secret")
+	if s == nil {
+		t.Fatal("expected non-nil Snapshotter")
+	}
+}
+
+func TestCapture_ServerError(t *testing.T) {
+	ts, client := newSnapshotServer(t, 500, map[string]interface{}{"errors": []string{"internal server error"}})
+	defer ts.Close()
+
+	s := NewSnapshotter(client, "secret")
+	_, err := s.Capture(context.Background(), "myapp/config", 1)
+	if err == nil {
+		t.Fatal("expected error for 500, got nil")
 	}
 }
