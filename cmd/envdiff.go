@@ -28,13 +28,9 @@ var envdiffCmd = &cobra.Command{
 			return fmt.Errorf("load config: %w", err)
 		}
 
-		envConfigs := make(map[string]vault.EnvConfig, len(cfg.Environments))
-		for name, e := range cfg.Environments {
-			envConfigs[name] = vault.EnvConfig{
-				Address:   e.Address,
-				Namespace: e.Namespace,
-				Token:     e.Token,
-			}
+		envConfigs, err := buildEnvConfigs(cfg)
+		if err != nil {
+			return err
 		}
 
 		ec, err := vault.NewEnvComparer(envConfigs)
@@ -50,6 +46,26 @@ var envdiffCmd = &cobra.Command{
 		changes := diff.Secrets(src, dst)
 		return diff.Write(os.Stdout, changes, showUnchanged)
 	},
+}
+
+// buildEnvConfigs converts the loaded config into a map of vault.EnvConfig values,
+// validating that the requested src and dst environments are present.
+func buildEnvConfigs(cfg *Config) (map[string]vault.EnvConfig, error) {
+	envConfigs := make(map[string]vault.EnvConfig, len(cfg.Environments))
+	for name, e := range cfg.Environments {
+		envConfigs[name] = vault.EnvConfig{
+			Address:   e.Address,
+			Namespace: e.Namespace,
+			Token:     e.Token,
+		}
+	}
+	if _, ok := envConfigs[srcEnv]; !ok {
+		return nil, fmt.Errorf("source environment %q not found in config", srcEnv)
+	}
+	if _, ok := envConfigs[dstEnv]; !ok {
+		return nil, fmt.Errorf("destination environment %q not found in config", dstEnv)
+	}
+	return envConfigs, nil
 }
 
 func init() {
