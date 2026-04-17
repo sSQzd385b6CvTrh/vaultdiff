@@ -59,7 +59,7 @@ func (a *AuditDeviceLister) List() ([]AuditDevice, error) {
 	for path, data := range raw {
 		var d AuditDevice
 		if err := json.Unmarshal(data, &d); err != nil {
-			continue
+			return nil, fmt.Errorf("failed to parse audit device at path %q: %w", path, err)
 		}
 		d.Path = path
 		devices = append(devices, d)
