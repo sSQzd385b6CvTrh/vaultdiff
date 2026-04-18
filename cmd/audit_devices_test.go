@@ -29,14 +29,24 @@ func startAuditDeviceServer(t *testing.T) *httptest.Server {
 	}))
 }
 
+// setVaultEnv sets VAULT_ADDR and VAULT_TOKEN for the duration of a test,
+// returning a cleanup function that unsets them.
+func setVaultEnv(t *testing.T, addr, token string) func() {
+	t.Helper()
+	os.Setenv("VAULT_ADDR", addr)
+	os.Setenv("VAULT_TOKEN", token)
+	return func() {
+		os.Unsetenv("VAULT_ADDR")
+		os.Unsetenv("VAULT_TOKEN")
+	}
+}
+
 func TestAuditDevicesCmd_Output(t *testing.T) {
 	ts := startAuditDeviceServer(t)
 	defer ts.Close()
 
-	os.Setenv("VAULT_ADDR", ts.URL)
-	os.Setenv("VAULT_TOKEN", "test-token")
-	defer os.Unsetenv("VAULT_ADDR")
-	defer os.Unsetenv("VAULT_TOKEN")
+	cleanup := setVaultEnv(t, ts.URL, "test-token")
+	defer cleanup()
 
 	_ = vault.NewAuditDeviceLister // ensure import used
 
