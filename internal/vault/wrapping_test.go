@@ -11,6 +11,11 @@ func wrappingLookupResponse(info WrappingInfo) map[string]interface{} {
 	return map[string]interface{}{"data": info}
 }
 
+// newTestClient creates a Client pointed at the given test server URL.
+func newTestClient(serverURL string) *Client {
+	return &Client{Address: serverURL, Token: "root"}
+}
+
 func TestLookupWrapping_Success(t *testing.T) {
 	expected := WrappingInfo{
 		Token:        "s.abc123",
@@ -28,8 +33,7 @@ func TestLookupWrapping_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := &Client{Address: ts.URL, Token: "root"}
-	inspector := NewWrappingInspector(c)
+	inspector := NewWrappingInspector(newTestClient(ts.URL))
 	info, err := inspector.Lookup("s.abc123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -51,8 +55,7 @@ func TestLookupWrapping_NotFound(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := &Client{Address: ts.URL, Token: "root"}
-	inspector := NewWrappingInspector(c)
+	inspector := NewWrappingInspector(newTestClient(ts.URL))
 	_, err := inspector.Lookup("s.expired")
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -65,8 +68,7 @@ func TestLookupWrapping_UnexpectedStatus(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := &Client{Address: ts.URL, Token: "root"}
-	inspector := NewWrappingInspector(c)
+	inspector := NewWrappingInspector(newTestClient(ts.URL))
 	_, err := inspector.Lookup("s.bad")
 	if err == nil {
 		t.Fatal("expected error for 500")
