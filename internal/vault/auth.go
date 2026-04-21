@@ -83,3 +83,13 @@ func (a *AuthInspector) LookupAuth() (*AuthInfo, error) {
 		Renewable:   result.Data.Renewable,
 	}, nil
 }
+
+// HasPolicy reports whether the AuthInfo contains the given policy name.
+func (a *AuthInfo) HasPolicy(policy string) bool {
+	for _, p := range a.Policies {
+		if p == policy {
+			return true
+		}
+	}
+	return false
+}
