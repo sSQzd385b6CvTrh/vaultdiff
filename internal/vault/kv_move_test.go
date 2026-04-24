@@ -70,6 +70,16 @@ func TestKVMove_CopyFails(t *testing.T) {
 	}
 }
 
+func TestKVMove_SameSourceAndDest(t *testing.T) {
+	client := &Client{Address: "http://localhost:8200", Token: "tok"}
+	mover := NewKVMover(client, "secret")
+
+	err := mover.Move(context.Background(), "src/key", "src/key")
+	if err == nil {
+		t.Fatal("expected error when source and destination are the same, got nil")
+	}
+}
+
 func TestNewKVMover_DefaultMount(t *testing.T) {
 	client := &Client{Address: "http://localhost:8200", Token: "tok"}
 	m := NewKVMover(client, "")
