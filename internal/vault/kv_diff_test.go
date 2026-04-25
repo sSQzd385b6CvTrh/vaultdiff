@@ -34,15 +34,25 @@ func newKVDiffServer(srcData, dstData map[string]interface{}) *httptest.Server {
 	}))
 }
 
+// newKVDiffClient creates a Vault API client pointed at the given test server URL.
+func newKVDiffClient(t *testing.T, serverURL string) *api.Client {
+	t.Helper()
+	cfg := api.DefaultConfig()
+	cfg.Address = serverURL
+	client, err := api.NewClient(cfg)
+	if err != nil {
+		t.Fatalf("failed to create vault client: %v", err)
+	}
+	return client
+}
+
 func TestKVDiff_Success(t *testing.T) {
 	srcData := map[string]interface{}{"key": "value1", "shared": "same"}
 	dstData := map[string]interface{}{"key": "value2", "shared": "same"}
 	server := newKVDiffServer(srcData, dstData)
 	defer server.Close()
 
-	cfg := api.DefaultConfig()
-	cfg.Address = server.URL
-	client, _ := api.NewClient(cfg)
+	client := newKVDiffClient(t, server.URL)
 
 	differ := NewKVDiffer(client, "secret")
 	result, err := differ.Diff("src/app", "dst/app")
@@ -61,9 +71,7 @@ func TestKVDiff_SourceNotFound(t *testing.T) {
 	server := newKVDiffServer(nil, nil)
 	defer server.Close()
 
-	cfg := api.DefaultConfig()
-	cfg.Address = server.URL
-	client, _ := api.NewClient(cfg)
+	client := newKVDiffClient(t, server.URL)
 
 	differ := NewKVDiffer(client, "secret")
 	_, err := differ.Diff("missing/path", "dst/app")
