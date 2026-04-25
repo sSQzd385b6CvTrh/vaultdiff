@@ -57,6 +57,20 @@ func (p *KVProtector) IsProtected(path string) (bool, error) {
 	return cm["protected"] == "true", nil
 }
 
+// ToggleProtection flips the protection flag on the given path.
+// If the secret is currently protected it will be unprotected, and vice versa.
+// It returns the new protection state.
+func (p *KVProtector) ToggleProtection(path string) (bool, error) {
+	protected, err := p.IsProtected(path)
+	if err != nil {
+		return false, fmt.Errorf("toggle: failed to read current state: %w", err)
+	}
+	if protected {
+		return false, p.Unprotect(path)
+	}
+	return true, p.Protect(path)
+}
+
 func (p *KVProtector) setProtected(path, value string) error {
 	url := fmt.Sprintf("/v1/%s/metadata/%s", p.mount, path)
 	body := map[string]interface{}{
