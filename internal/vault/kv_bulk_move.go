@@ -51,7 +51,7 @@ func (m *KVBulkMover) Move(pairs []MovePair) []BulkMoveResult {
 			results = append(results, res)
 			continue
 		}
-		defer readResp.Body.Close()
+		readResp.Body.Close()
 		if readResp.StatusCode == http.StatusNotFound {
 			res.Err = fmt.Errorf("source not found: %s", p.Source)
 			results = append(results, res)
@@ -77,4 +77,16 @@ func (m *KVBulkMover) Move(pairs []MovePair) []BulkMoveResult {
 		results = append(results, res)
 	}
 	return results
+}
+
+// Errors returns a slice of all non-nil errors from the move results,
+// useful for quickly checking whether any operations failed.
+func (r []BulkMoveResult) Errors() []error {
+	var errs []error
+	for _, res := range r {
+		if res.Err != nil {
+			errs = append(errs, res.Err)
+		}
+	}
+	return errs
 }
